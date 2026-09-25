@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<title>三合一插件 · 模拟宿主测试</title>
+<style>body{margin:0;background:#101316;color:#e8edf2;font:13px sans-serif}header{padding:10px}iframe{width:min(100%,600px);height:850px;border:0}pre{white-space:pre-wrap;padding:10px}</style>
+<header>模拟宿主测试页，不连接实际作品。输入 TEST-MONTH、TEST-YEAR、TEST-CUSTOM 或 TEST-PERMANENT 测试激活界面；这些文字不是有效激活码。<br><a href="?sdk=modern">新版 SDK</a> · <a href="?sdk=legacy">旧版 SDK（仅回调）</a> · 当前：<span id="mode"></span></header>
+<iframe id="plugin" title="三合一插件"></iframe>
+<pre id="calls">尚未调用</pre>
+<script>
+  const frame = document.getElementById('plugin');
+  const legacy = new URLSearchParams(location.search).get('sdk') === 'legacy';
+  document.getElementById('mode').textContent = legacy ? '旧版 SDK（仅回调）' : '新版 SDK（Promise）';
+  const records = [];
+  let imported = false;
+  let license = {active: false, permanent: false, expires_at: 0, expires_text: '', label: '未激活', machine_code: 'LY-1234-1234-1234-1234-1234-1234-1234-1234'};
+  const used = new Set();
+  const post = payload => frame.contentWindow.postMessage({__typetale_plugin: true, ...payload}, location.origin);
+  window.addEventListener('message', event => {
+    if (event.source !== frame.contentWindow || event.origin !== location.origin) return;
+    const message = event.data || {};
+    if (!message.__typetale_plugin) return;
+    if (message.type === 'plugin_ready') post({type: 'init_params', params: {selected_feature: 'sections'}});
+    if (message.type !== 'plugin_action') return;
+    records.push({action: message.action, data: message.data});
+    document.getElementById('calls').textContent = JSON.stringify(records, null, 2);
+    let result;
+    if (message.action === 'license_status') result = {ok: true, data: license};
+    else if (message.action === 'activate_license') {
+      const code = message.data.code;
+      if (!['TEST-MONTH', 'TEST-YEAR', 'TEST-CUSTOM', 'TEST-PERMANENT'].includes(code)) result = {ok: false, error: '测试：激活码无效。'};
+      else if (used.has(code)) result = {ok: false, error: '此激活码已经使用过，不能重复增加天数。'};
+      else {
+        used.add(code);
+        const days = code === 'TEST-YEAR' ? 365 : code === 'TEST-CUSTOM' ? 19 : 30;
+        const permanent = code === 'TEST-PERMANENT';
+        const expiry = Math.max(Date.now() / 1000, license.expires_at) + days * 86400;
+        const date = new Date(expiry * 1000);
+        const text = date.getFullYear() + '/' + (date.getMonth() + 1) + '/' + date.getDate();
+        license = {...license, active: true, permanent, expires_at: expiry, expires_text: text + ' 12:00:00', label: permanent ? '已激活·永久' : '已激活·' + text, added_days: permanent ? 0 : days};
+        result = {ok: true, data: license};
+      }
+    }
+    else if (['check_update', 'update_status'].includes(message.action)) result = {ok: true, data: {ok:true, state:'latest', current_version:'3.0.0', latest_version:'3.0.0', running:false, message:'当前已是最新版。', releases:[{version:'3.0.0',notes:'首次正式发布。\n新增版本更新板块、历史记录翻页、独立更新助手。'}]}};
+    else if (message.action === 'import_sections') result = {ok: true, message: '测试：已写入 2 段，新增分镜 1 个。', data: {written: 2, added_panels: 1, errors: []}};
+    else if (message.action === 'choose_folder') result = {ok: true, data: {folder_path: 'C:\\测试资产'}};
+    else if (message.action === 'scan_assets') {
+      const count = imported ? 0 : 1;
+      result = {ok: true, data: {found_count: 3, importable_count: count * 3, counts: {character: 1, location: 1, item: 1},
+        categories: Object.fromEntries(['character', 'location', 'item'].map(key => [key, {importable_count: count, existing_count: 1 - count, files: [{name: key === 'character' ? '<测试角色>' : '测试资产'}]}])), message: '测试：扫描完成。'}};
+    }
+    else if (message.action === 'import_assets') { imported = true; result = {ok: true, data: {created: 3, failed: 0, errors: [], message: '测试：成功导入 3 个资产。'}}; }
+    else if (message.action === 'map_images') result = {ok: true, data: {status: 'ok', total_panels: 2, target_count: 2, success_count: 2, failed_count: 0, panel_range: '1-末尾', message: '测试：匹配成功 2 个分镜。', logs: ['测试角色、场景、道具选中完成。']}};
+    else result = {ok: false, error: 'Unknown test action'};
+    setTimeout(() => {
+      if (!legacy) post({type: 'action_result', requestId: message.requestId, result});
+      post({type: 'action', action: message.action, data: result});
+    }, 50);
+  });
+  if (legacy) {
+    fetch('../ui/index.html').then(response => {
+      if (!response.ok) throw new Error('无法读取插件页面');
+      return response.text();
+    }).then(html => {
+      frame.srcdoc = html.replace('<head>', '<head><base href="' + new URL('../ui/', location.href).href + '">')
+        .replace('src="../../../../plugin-sdk.js"', 'src="../tests/legacy-sdk.js"');
+    }).catch(error => { document.getElementById('calls').textContent = error.message; });
+  } else frame.src = '../ui/index.html';
+</script>
+</html>

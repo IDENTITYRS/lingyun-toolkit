@@ -1,0 +1,187 @@
+{
+  "name": "lingyun_practical_toolkit",
+  "display_name": "凌云·字字实用插件大全",
+  "description": "三个作品工具合为一个插件：按空行批量导入分镜提示词、按文件名批量导入角色/场景/道具图片、按全文或指定文字行匹配参考图片。通过 feature 选择功能，资产导入通过 action 区分扫描和写入。",
+  "version": "3.0.0",
+  "scope": "project",
+  "expose_as_tool": true,
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "feature": {
+        "type": "string",
+        "enum": [
+          "sections",
+          "assets",
+          "mapper"
+        ],
+        "default": "sections",
+        "description": "sections=导入提示词；assets=导入资产；mapper=按全文或指定文字行匹配图片"
+      },
+      "text": {
+        "type": "string",
+        "description": "sections 功能的分镜内容，以空行分段"
+      },
+      "start_index": {
+        "type": "integer",
+        "minimum": 1,
+        "default": 1,
+        "description": "写入或匹配的起始分镜序号，从 1 开始"
+      },
+      "end_index": {
+        "type": "integer",
+        "minimum": 0,
+        "default": 0,
+        "description": "匹配结束序号，0 表示到最后"
+      },
+      "require_prompt": {
+        "type": "boolean",
+        "default": true,
+        "description": "匹配时仅处理已有提示词的分镜"
+      },
+      "match_mode": {
+        "type": "string",
+        "enum": [
+          "full",
+          "specified"
+        ],
+        "default": "full",
+        "description": "匹配模式：full=全文匹配；specified=只匹配包含指定词的文字行"
+      },
+      "match_keywords": {
+        "type": "string",
+        "description": "指定匹配词，多个词用顿号（、）分隔，例如：人物、场景"
+      },
+      "action": {
+        "type": "string",
+        "enum": [
+          "scan_assets",
+          "import_assets"
+        ],
+        "default": "scan_assets",
+        "description": "资产功能：扫描预览或实际导入"
+      },
+      "folder_path": {
+        "type": "string",
+        "description": "资产总目录，包含角色、场景、物品子目录"
+      },
+      "entity_types": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "character",
+            "location",
+            "item"
+          ]
+        },
+        "description": "导入资产类型，省略则导入全部三类"
+      }
+    },
+    "required": [
+      "feature"
+    ]
+  },
+  "declared_capabilities": [
+    {
+      "id": "import_storyboard_sections",
+      "description": "拆分空行段落，读取分镜并写入指定字段，按需新增分镜。实现位于随包分发的 lingyun_features/sections.py。",
+      "requires_tools": [
+        "zzdh_get_panels",
+        "zzdh_add_panel",
+        "zzdh_update_video_prompt",
+        "zzdh_update_prompt",
+        "zzdh_update_paperwork",
+        "zzdh_update_negative_prompt"
+      ],
+      "effects": [
+        "reads_project_panels",
+        "creates_panels",
+        "updates_panel_text_fields"
+      ]
+    },
+    {
+      "id": "preview_asset_images",
+      "description": "扫描用户所选图片目录，读取作品三类资产并标记重名。实现位于 lingyun_features/assets.py。",
+      "requires_tools": [
+        "zzdh_get_entity_list"
+      ],
+      "effects": [
+        "reads_entity_assets",
+        "reads_user_selected_folder"
+      ]
+    },
+    {
+      "id": "import_asset_images",
+      "description": "通过宿主批量实体接口创建角色、场景和道具，宿主复制图片。实现位于 lingyun_features/assets.py。",
+      "requires_tools": [
+        "zzdh_get_entity_list",
+        "zzdh_batch_create_entity"
+      ],
+      "effects": [
+        "creates_character_assets",
+        "creates_location_assets",
+        "creates_item_assets",
+        "copies_asset_images_into_project"
+      ]
+    },
+    {
+      "id": "match_prompt_reference_images",
+      "description": "按全文或包含指定词的文字行匹配名称及别名，最长优先、忽略双引号对白，更新分镜参考图选中项。实现位于 lingyun_features/mapper.py。",
+      "requires_tools": [
+        "zzdh_get_panels",
+        "zzdh_get_entity_list",
+        "zzdh_set_panel_entity_selections"
+      ],
+      "effects": [
+        "reads_project_panels",
+        "reads_entity_assets",
+        "updates_panel_entity_selections"
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "id": "panel.read",
+      "name": "读取分镜",
+      "description": "读取当前作品分镜、提示词和序号。",
+      "risk": "low",
+      "source": "declared"
+    },
+    {
+      "id": "panel.write",
+      "name": "修改分镜",
+      "description": "写入分镜文本、按需新增分镜，并更新参考图选中项。",
+      "risk": "medium",
+      "source": "declared"
+    },
+    {
+      "id": "asset.read",
+      "name": "读取资产",
+      "description": "读取当前作品资产名称及别名，扫描用户所选目录。",
+      "risk": "low",
+      "source": "declared"
+    },
+    {
+      "id": "asset.write",
+      "name": "导入资产",
+      "description": "通过宿主接口创建资产并复制用户所选图片。",
+      "risk": "medium",
+      "source": "declared"
+    },
+    {
+      "id": "network.update",
+      "name": "检查与下载更新",
+      "description": "从 GitHub 获取版本说明与签名更新包，自动检查不会自动安装。",
+      "risk": "low",
+      "source": "declared"
+    },
+    {
+      "id": "plugin.update",
+      "name": "更新插件程序",
+      "description": "用户选择更新后，验签并等待软件退出，备份后替换本插件程序，失败恢复。",
+      "risk": "medium",
+      "source": "declared"
+    }
+  ]
+}

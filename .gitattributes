@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.png binary
+main.py -text
+lingyun_update_public.json -text
+lingyun_features/license_public.json -text

@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+dist/
+*.zip
+*.rar
+tools/adapt_updater.py
+*private*
+license.dat
+.env

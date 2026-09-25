@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>凌云·字字实用插件大全</title>
+  <script src="compact-host.js"></script>
+  <link rel="stylesheet" href="../../../../plugin-sdk.css">
+  <style>
+    :root { color-scheme: dark; --accent: var(--plugin-accent, #52b69a); }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; padding: var(--plugin-space-md, 16px); font: 13px/1.65 "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: var(--plugin-text, #e8edf2); background: radial-gradient(ellipse at top left, #52b69a15, transparent 55%), var(--plugin-bg, #101316); }
+    .shell { max-width: 1080px; margin: auto; display: grid; gap: 14px; }
+    .hero, .panel { border: 1px solid var(--plugin-border, #2a3138); border-radius: var(--plugin-radius-lg, 14px); background: var(--plugin-surface, #191f24); overflow: hidden; }
+    .hero { padding: 10px; background: linear-gradient(125deg, #52b69a20, transparent 70%), var(--plugin-surface, #191f24); }
+    .hero-top { display: flex; justify-content: space-between; gap: 6px; align-items: center; flex-wrap: wrap; }
+    h1, h2, h3, p { margin: 0; } h1 { font-size: 15px; line-height: 1.4; } h2 { font-size: 15px; } h3 { font-size: 13px; }
+    .hero p { margin-top: 5px; color: var(--plugin-text-soft, #b8c2cc); }
+    .badge { flex: 0 0 auto; color: #64d7a5; border: 1px solid #64d7a566; border-radius: 20px; padding: 1px 7px; font-size: 11px; line-height: 1.5; white-space: nowrap; }
+    .license-fields { display: grid; gap: 6px; padding: 10px; }
+    .license-status { display: flex; justify-content: flex-end; min-height: 0; }
+    .license-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 6px; align-items: center; }
+    .license-row label { font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .license-row input[type=text], .license-row button { height: 28px; min-height: 28px; padding: 3px 7px; font-size: 12px; line-height: 20px; border-radius: 5px; }
+    #machineCode { font: 11px/20px Consolas, monospace; color: var(--plugin-text-soft, #b8c2cc); }
+    #licenseMessage { font-size: 12px; overflow-wrap: anywhere; min-height: 0; margin: 0; }
+    #licenseMessage:empty { display: none; }
+    #licenseMessage.err { color: #ff9292; }
+    #licenseMessage.ok { color: #64d7a5; }
+    .selector { position: relative; margin-top: 10px; }
+    .selector-hint { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--plugin-text-soft, #b8c2cc); font-size: 12px; }
+    .selector-hint .chevron { display: inline-block; width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-2px) rotate(45deg); margin-left: 10px; }
+    label { display: block; color: var(--plugin-text-soft, #b8c2cc); }
+    .selector label { font-weight: 600; }
+    select, input[type=text], input[type=number], textarea { width: 100%; min-width: 0; font: inherit; color: var(--plugin-text, #e8edf2); background: var(--plugin-input-bg, #11171c); border: 1px solid var(--plugin-border-strong, #3a454f); border-radius: var(--plugin-radius-sm, 8px); padding: 9px 11px; }
+    textarea { display: block; min-height: 220px; resize: vertical; line-height: 1.7; margin-top: 7px; }
+    input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    #featureSelect { font-weight: 600; appearance: none; padding: 13px 135px 13px 12px; cursor: pointer; background-image: none; }
+    .panel-head { padding: 13px 16px; border-bottom: 1px solid var(--plugin-border, #2a3138); }
+    .panel-body { padding: 16px; display: grid; gap: 14px; }
+    .feature { display: grid; gap: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .grid label input, .grid label select { margin-top: 6px; }
+    .hint { color: var(--plugin-text-muted, #8fa0a9); font-size: 12px; }
+    .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .mode-switch { display: flex; gap: 8px; flex-wrap: wrap; }
+    .mode-button { flex: 1 1 150px; text-align: center; }
+    .mode-button.active { background: var(--accent); border-color: var(--accent); color: var(--plugin-accent-contrast, #091a15); }
+    .mode-fields { display: grid; gap: 7px; }
+    .mode-fields input { margin-top: 0; }
+    #mapperPanel .panel-head { padding: 10px 14px; }
+    #mapperPanel .panel-head .hint { line-height: 1.45; }
+    #mapperPanel .panel-body { padding: 12px; gap: 9px; }
+    #mapperPanel .panel-body .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+    #mapperPanel .panel-body .grid label input { margin-top: 4px; padding-top: 7px; padding-bottom: 7px; }
+    #mapperPanel .mode-switch { gap: 6px; }
+    #mapperPanel .mode-button { padding-top: 6px; padding-bottom: 6px; }
+    #mapperPanel .mode-fields { gap: 4px; }
+    #mapperPanel .mode-fields input { padding-top: 7px; padding-bottom: 7px; }
+    #mapperPanel .hint { line-height: 1.45; }
+    #mapperPanel .actions { gap: 8px; }
+    #assetsPanel .panel-head { padding: 10px 14px; }
+    #assetsPanel .panel-head .hint { line-height: 1.45; }
+    #assetsPanel .panel-body { padding: 12px; gap: 9px; }
+    #assetsPanel .path-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; }
+    #assetsPanel .path-row input { min-width: 0; padding-top: 7px; padding-bottom: 7px; }
+    #assetsPanel .path-row button { padding: 6px 8px; font-size: 12px; white-space: nowrap; }
+    #assetsPanel .hint { line-height: 1.45; }
+    #assetsPanel .metrics { gap: 6px; }
+    #assetsPanel .metric { padding: 8px; }
+    #assetsPanel .metric strong { font-size: 20px; margin: 2px 0; }
+    #assetsPanel .metric .names { margin-top: 3px; }
+    #assetsPanel .actions { gap: 8px; }
+    #assetsPanel #assetImport { padding-top: 7px; padding-bottom: 7px; }
+    #assetsPanel .result { padding: 10px; min-height: 44px; }
+    button { border: 1px solid var(--plugin-border-strong, #3a454f); border-radius: var(--plugin-radius-sm, 8px); background: var(--plugin-button-bg, #28323a); color: var(--plugin-text, #e8edf2); padding: 9px 15px; font: inherit; font-weight: 600; cursor: pointer; }
+    button:hover:not(:disabled) { filter: brightness(1.15); border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: var(--plugin-accent-contrast, #091a15); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .check { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; color: var(--plugin-text, #e8edf2); }
+    input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; }
+    .path-row { display: flex; gap: 8px; flex-wrap: wrap; } .path-row input { flex: 1 1 260px; } .path-row button { flex: 0 0 auto; }
+    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .metric { border: 1px solid var(--plugin-border, #2a3138); border-radius: 10px; padding: 12px; min-width: 0; background: var(--plugin-input-bg, #11171c); }
+    .metric strong { display: block; font-size: 25px; color: var(--accent); margin: 3px 0; }
+    .metric .names { overflow-wrap: anywhere; margin-top: 5px; }
+    .result { margin: 0; padding: 13px; min-height: 52px; max-height: 360px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit;
+      background: var(--plugin-input-bg, #11171c); border: 1px solid var(--plugin-border, #2a3138); border-radius: 8px; color: var(--plugin-text-soft, #b8c2cc); }
+    .result.ok { color: var(--plugin-success, #75d6b7); } .result.err { color: var(--plugin-danger, #ff9292); } .result.warn { color: var(--plugin-warning, #efc572); }
+    .footnote { text-align: center; color: var(--plugin-text-muted, #8fa0a9); font-size: 11px; }
+    @media (max-width: 540px) { body { padding: 10px; } .panel-body { padding: 14px; } .grid { grid-template-columns: 1fr; } .metrics { gap: 6px; } .metric { padding: 9px; } .selector { grid-template-columns: 1fr; gap: 5px; } .path-row input { flex-basis: 100%; } }
+    @media (max-width: 340px) {
+      .metrics { grid-template-columns: 1fr; }
+      #assetsPanel .path-row { grid-template-columns: 1fr; }
+    }
+    .update-panel { padding: 12px; }
+    .update-panel summary { cursor: pointer; color: var(--plugin-text-soft, #b8c2cc); }
+    .update-panel > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .update-panel > summary::before { content: '›'; }
+    .update-panel[open] > summary::before { content: '⌄'; }
+    #updateVersion { margin-left: auto; color: #64d7a5; white-space: nowrap; }
+    #updateHint { color: #ffd17e; font-size: 12px; }
+    .update-content { display: grid; gap: 10px; margin-top: 12px; }
+    .update-message { padding: 8px 10px; border-left: 3px solid var(--accent); background: var(--plugin-input-bg, #11171c); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .update-message.err { color: #ff9292; border-color: #ff9292; }
+    #updateProgress { width: 100%; height: 8px; accent-color: var(--accent); }
+    .update-history { border: 1px solid var(--plugin-border, #2a3138); border-radius: 8px; padding: 10px; }
+    .update-pager { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; }
+    .update-pager button { padding: 3px 10px; }
+    .update-notes { max-height: 180px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 5px 0 0; color: var(--plugin-text-muted, #8fa0a9); }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="selector">
+        <select id="featureSelect" aria-label="选择插件功能">
+          <option value="sections">导入提示词</option>
+          <option value="assets">导入资产</option>
+          <option value="mapper">一键匹配图片</option>
+        </select>
+        <span class="selector-hint" aria-hidden="true">选择插件功能<span class="chevron"></span></span>
+      </div>
+    </header>
+
+    <section id="sectionsPanel" class="feature" aria-label="导入提示词">
+      <div class="panel">
+        <div class="panel-head"><h2>批量写入分镜提示词</h2><p class="hint">每段内容对应一个分镜，段落之间用空行分隔；分镜不足时自动新增。</p></div>
+        <div class="panel-body">
+          <div><label for="sectionText">粘贴分镜内容</label><textarea id="sectionText" placeholder="第一段分镜内容…&#10;&#10;第二段分镜内容…&#10;&#10;第三段分镜内容…"></textarea></div>
+          <div>
+            <label for="sectionStart">起始分镜序号<input id="sectionStart" type="number" min="1" step="1" value="1"></label>
+          </div>
+          <div class="actions"><button id="sectionRun" class="primary" type="button">导入到视频提示词</button><span id="sectionCount" class="hint">当前可识别 0 段</span></div>
+          <p class="hint">执行后将替换目标分镜对应字段的内容。</p>
+          <pre id="sectionResult" class="result" role="status" aria-live="polite">粘贴内容后点击导入。</pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="assetsPanel" class="feature" aria-label="导入资产" hidden>
+      <div class="panel">
+        <div class="panel-head"><h2>批量导入资产图片</h2><p class="hint">按文件名创建角色、场景、道具；同类型同名资产自动跳过。</p></div>
+        <div class="panel-body">
+          <label for="assetPath">资产总文件夹</label>
+          <div class="path-row"><input id="assetPath" type="text" spellcheck="false" placeholder="例如 D:\素材\我的作品"><button id="assetChoose" type="button">选择文件夹</button><button id="assetScan" type="button">扫描目录</button></div>
+          <p class="hint">总目录内放置“角色 / 场景 / 物品”子文件夹，也支持“人物 / 地点 / 道具”和英文目录名。支持 PNG、JPG、JPEG、WEBP、BMP。</p>
+          <div id="assetStats" class="metrics"></div>
+          <div id="assetSummary" class="hint">尚未扫描目录</div>
+          <div class="actions" id="assetTypes"><label class="check"><input type="checkbox" value="character" checked>角色</label><label class="check"><input type="checkbox" value="location" checked>场景</label><label class="check"><input type="checkbox" value="item" checked>道具</label></div>
+          <div class="actions"><button id="assetImport" class="primary" type="button" disabled>一键导入资产</button></div>
+          <pre id="assetResult" class="result" role="status" aria-live="polite">选择文件夹后，先扫描预览，再导入资产。</pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="mapperPanel" class="feature" aria-label="一键匹配图片" hidden>
+      <div class="panel">
+        <div class="panel-head"><h2>按提示词匹配参考图片</h2><p class="hint">按分镜提示词匹配角色、场景、道具资产，并更新分镜左侧参考图选中项。</p></div>
+        <div class="panel-body mapper-panel-body">
+          <div class="grid"><label for="mapStart">起始分镜序号<input id="mapStart" type="number" min="1" step="1" value="1"></label><label for="mapEnd">结束分镜序号（0 = 到最后）<input id="mapEnd" type="number" min="0" step="1" value="0"></label></div>
+          <div>
+            <label>匹配模式</label>
+            <div class="mode-switch" role="group" aria-label="匹配模式">
+              <button id="mapModeFull" class="mode-button active" type="button" data-mode="full" aria-pressed="true">全文匹配</button>
+              <button id="mapModeSpecified" class="mode-button" type="button" data-mode="specified" aria-pressed="false">指定匹配</button>
+            </div>
+          </div>
+          <div id="mapKeywordFields" class="mode-fields" hidden>
+            <label for="mapKeywords">指定匹配词（用“、”分隔）</label>
+            <input id="mapKeywords" type="text" spellcheck="false" placeholder="例如：人物、场景">
+            <p class="hint">只匹配包含这些词的文字行，再从这些行中匹配资产名称。例如“人物、场景”会匹配【出场人物】和【场景地点】所在行。</p>
+          </div>
+          <label class="check"><input id="mapRequire" type="checkbox" checked>只处理已有图片 / 视频提示词的分镜</label>
+          <div class="actions"><button id="mapRun" class="primary" type="button">开始匹配图片</button></div>
+          <p class="hint">全文匹配扫描整段提示词；指定匹配只扫描包含匹配词的行。均按长名称优先，并忽略中英文双引号内的对白。</p>
+          <p class="hint">请先导入对应资产；没有命中的类别会清空本次选中。</p>
+          <pre id="mapResult" class="result" role="status" aria-live="polite">设置分镜范围后开始匹配。</pre>
+        </div>
+      </div>
+    </section>
+    <details id="updatePanel" class="panel update-panel">
+      <summary><span>版本更新</span><span id="updateHint"></span><span id="updateVersion">当前版本：V3.0.0</span></summary>
+      <div class="update-content">
+        <div class="actions"><button id="checkUpdate" type="button">检查更新</button><button id="installUpdate" class="primary" type="button" hidden>更新</button></div>
+        <div id="updateMessage" class="update-message" role="status" aria-live="polite">正在准备检查更新…</div>
+        <progress id="updateProgress" max="100" aria-label="版本更新进度" hidden></progress>
+        <span id="updateBytes" class="hint"></span>
+        <pre id="updateNewNotes" class="update-notes" hidden></pre>
+        <details class="update-history"><summary>历史更新记录</summary>
+          <div class="update-pager"><button id="updateHistoryPrev" type="button" aria-label="上一条更新记录" disabled>←</button><span id="updateHistoryPosition">1 / 1</span><button id="updateHistoryNext" type="button" aria-label="下一条更新记录" disabled>→</button></div>
+          <h3 id="updateHistoryTitle">V3.0.0 更新内容</h3>
+          <pre id="updateHistoryNotes" class="update-notes">首次正式发布；集成三项作品工具、版本更新和授权管理。</pre>
+        </details>
+      </div>
+    </details>
+    <section class="panel license-fields" aria-label="插件激活与续期">
+      <div class="license-status"><span id="licenseBadge" class="badge" role="status" aria-live="polite">未激活</span></div>
+      <div class="license-row"><label for="machineCode">机器码</label><input id="machineCode" type="text" readonly placeholder="正在获取机器码…"><button id="copyMachine" type="button">复制</button></div>
+      <div class="license-row"><label for="activationCode">激活码</label><input id="activationCode" type="text" autocomplete="off" spellcheck="false" placeholder="粘贴激活码，激活或续期"><button id="activateLicense" type="button">激活</button></div>
+      <p id="licenseMessage" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+  <script src="../../../../plugin-sdk.js"></script>
+  <script src="host-bridge.js"></script>
+  <script src="update-panel.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    const el = id => document.getElementById(id);
+    const features = ['sections', 'assets', 'mapper'];
+    const resultIds = {sections: 'sectionResult', assets: 'assetResult', mapper: 'mapResult'};
+    const types = [{key: 'character', label: '角色'}, {key: 'location', label: '场景'}, {key: 'item', label: '道具'}];
+    const state = {busy: false, updateInstalling: false, active: 'sections', scan: null, scannedPath: '', progressTarget: null, licensed: false, licenseBusy: false, expiresAt: 0, permanent: false, mapMode: 'full'};
+    const sdk = window.PluginSDK;
+    const requestAction = window.createLingyunHostBridge(sdk);
+    const updates = window.createLingyunUpdatePanel(requestAction, () => state.busy || state.licenseBusy, installing => { state.updateInstalling = installing; syncControls(); });
+    function status(id, text, kind = '') { el(id).textContent = text; el(id).className = 'result' + (kind ? ' ' + kind : ''); }
+    function save(key, value) { if (sdk && typeof sdk.saveParam === 'function') sdk.saveParam(key, value); }
+    function selectFeature(value) {
+      state.active = features.includes(value) ? value : 'sections';
+      el('featureSelect').value = state.active;
+      features.forEach(name => { el(name + 'Panel').hidden = name !== state.active; });
+    }
+    function selectMapMode(value) {
+      state.mapMode = value === 'specified' ? 'specified' : 'full';
+      ['full', 'specified'].forEach(mode => {
+        const button = el('mapMode' + (mode === 'full' ? 'Full' : 'Specified'));
+        const active = state.mapMode === mode;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      el('mapKeywordFields').hidden = state.mapMode !== 'specified';
+    }
+    function selectedTypes() { return Array.from(document.querySelectorAll('#assetTypes input:checked')).map(input => input.value); }
+    function syncControls() {
+      document.querySelectorAll('button, input, textarea, select').forEach(control => { if (!control.closest('#updatePanel')) control.disabled = state.busy || state.updateInstalling; });
+      ['sectionRun', 'assetChoose', 'assetScan', 'mapRun', 'mapModeFull', 'mapModeSpecified'].forEach(id => { el(id).disabled = state.busy || state.updateInstalling || state.licenseBusy || !state.licensed; });
+      el('activateLicense').disabled = state.busy || state.updateInstalling || state.licenseBusy;
+      el('activationCode').disabled = state.busy || state.updateInstalling || state.licenseBusy;
+      el('copyMachine').disabled = !el('machineCode').value;
+      updates.controls();
+      const selected = selectedTypes();
+      const categories = (state.scan && state.scan.categories) || {};
+      const count = selected.reduce((sum, key) => sum + Number((categories[key] || {}).importable_count || 0), 0);
+      el('assetImport').disabled = state.busy || state.updateInstalling || state.licenseBusy || !state.licensed || !state.scan || !selected.length || !count || state.scannedPath !== el('assetPath').value.trim();
+    }
+    function countSections() {
+      const text = el('sectionText').value.replace(/\r\n?/g, '\n').trim();
+      return text ? text.split(/\n[ \t　]*\n+/).filter(part => part.trim()).length : 0;
+    }
+    function refreshSections() {
+      el('sectionCount').textContent = '当前可识别 ' + countSections() + ' 段';
+      el('sectionRun').textContent = '导入到视频提示词';
+    }
+    function integer(id, minimum) {
+      const raw = el(id).value.trim();
+      const number = Number(raw);
+      if (!raw || !Number.isInteger(number) || number < minimum) throw new Error('请填写有效分镜序号（整数，最小为 ' + minimum + '）。');
+      return number;
+    }
+    function escapeHtml(value) { return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])); }
+    function renderStats(scan) {
+      el('assetStats').innerHTML = types.map(type => {
+        const category = scan && (scan.categories || {})[type.key] || {};
+        const files = category.files || [];
+        return '<article class="metric"><h3>' + type.label + '</h3><strong>' + (scan ? Number((scan.counts || {})[type.key] || 0) : '—') + '</strong>' +
+          '<div class="hint">' + (scan ? '可导入 ' + Number(category.importable_count || 0) + ' · 已存在 ' + Number(category.existing_count || 0) : '等待扫描') + '</div>' +
+          '<div class="hint names">' + escapeHtml(files.slice(0, 6).map(file => file.name).join('、')) + (files.length > 6 ? '…' : '') + '</div></article>';
+      }).join('');
+    }
+    async function send(action, data, options) {
+      const response = await requestAction(action, data, options);
+      if (!response || typeof response !== 'object') throw new Error('宿主未返回有效结果。');
+      if (response.license_required) {
+        state.licensed = false; el('licenseBadge').textContent = '未激活'; syncControls();
+        licenseMessage(response.error || '请激活或续期。', 'err');
+      }
+      return response;
+    }
+    function licenseMessage(text, kind = '') { el('licenseMessage').textContent = text; el('licenseMessage').className = kind; }
+    function renderLicense(data) {
+      state.licensed = !!data.active;
+      state.expiresAt = Number(data.expires_at || 0);
+      state.permanent = !!data.permanent;
+      el('licenseBadge').textContent = data.label || '未激活';
+      el('licenseBadge').title = data.permanent ? '永久激活' : data.expires_text ? '到期时间：' + data.expires_text : '尚未激活';
+      if (data.machine_code) el('machineCode').value = data.machine_code;
+      if (data.error) licenseMessage(data.error, 'err');
+      else if (data.expired) licenseMessage('授权已到期，请输入新激活码续期。', 'err');
+      syncControls();
+    }
+    async function refreshLicense() {
+      if (state.licenseBusy || state.busy || state.updateInstalling) return;
+      if (!sdk || typeof sdk.sendAction !== 'function') { licenseMessage('请在字字动画作品插件中打开，以获取机器码和激活状态。', 'err'); return; }
+      state.licenseBusy = true; syncControls();
+      try { renderLicense(requireSuccess(await send('license_status', {}, {timeoutMs: 15000}))); }
+      catch (error) { state.licensed = false; el('licenseBadge').textContent = '未激活'; licenseMessage('读取授权失败：' + (error.message || error), 'err'); }
+      finally { state.licenseBusy = false; syncControls(); updates.start(); }
+    }
+    el('copyMachine').addEventListener('click', async () => {
+      const value = el('machineCode').value;
+      if (!value) return;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(value);
+        else throw new Error('clipboard unavailable');
+        licenseMessage('机器码已复制。', 'ok');
+      } catch (_) {
+        el('machineCode').focus(); el('machineCode').select();
+        const copied = document.execCommand('copy');
+        licenseMessage(copied ? '机器码已复制。' : '机器码已选中，请按 Ctrl+C 复制。', 'ok');
+      }
+    });
+    el('activateLicense').addEventListener('click', async () => {
+      if (state.busy || state.updateInstalling || state.licenseBusy) return;
+      if (!sdk || typeof sdk.sendAction !== 'function') { licenseMessage('请在字字动画作品插件中激活。', 'err'); return; }
+      const code = el('activationCode').value.trim();
+      if (!code) { licenseMessage('请先粘贴激活码。', 'err'); return; }
+      state.licenseBusy = true; syncControls(); licenseMessage('正在验证激活码…');
+      try {
+        const data = requireSuccess(await send('activate_license', {code}, {timeoutMs: 30000}));
+        renderLicense(data); el('activationCode').value = '';
+        licenseMessage(data.permanent ? '已永久激活。' : '激活成功，增加 ' + data.added_days + ' 天；到期时间：' + data.expires_text, 'ok');
+      } catch (error) { licenseMessage(error.message || String(error), 'err'); }
+      finally { state.licenseBusy = false; syncControls(); updates.start(); }
+    });
+    el('activationCode').addEventListener('keydown', event => { if (event.key === 'Enter') el('activateLicense').click(); });
+    function requireSuccess(response) {
+      if (response.ok === false) throw new Error(response.error || response.message || '操作失败');
+      return response.data || response;
+    }
+    async function task(resultId, message, work) {
+      if (state.busy || state.updateInstalling || state.licenseBusy) return;
+      if (!state.licensed) { status(resultId, '请先激活插件后使用此功能。', 'err'); return; }
+      if (!sdk || typeof sdk.sendAction !== 'function') {
+        status(resultId, '请在字字动画的作品插件面板中打开本插件，当前未连接宿主。', 'err'); return;
+      }
+      state.busy = true; state.progressTarget = resultId; syncControls(); status(resultId, message);
+      try { await work(); }
+      catch (error) { status(resultId, '操作失败：' + (error.message || String(error)), 'err'); }
+      finally { state.busy = false; state.progressTarget = null; syncControls(); }
+    }
+    async function scanFolder() {
+      const path = el('assetPath').value.trim();
+      if (!path) throw new Error('请选择或填写资产总文件夹路径。');
+      state.scan = null; state.scannedPath = ''; renderStats(null);
+      el('assetSummary').textContent = '正在扫描…';
+      try {
+        const data = requireSuccess(await send('scan_assets', {folder_path: path}, {timeoutMs: 120000}));
+        state.scan = data; state.scannedPath = path; renderStats(data);
+        el('assetSummary').textContent = '共 ' + (data.found_count || 0) + ' 张 · 可导入 ' + (data.importable_count || 0) + ' 张';
+        status('assetResult', data.message || '扫描完成', data.importable_count ? 'ok' : 'warn');
+        save('last_folder_path', path);
+      } catch (error) { el('assetSummary').textContent = '扫描失败，请检查目录后重试'; throw error; }
+    }
+    el('featureSelect').addEventListener('change', () => { selectFeature(el('featureSelect').value); save('selected_feature', state.active); });
+    el('sectionText').addEventListener('input', refreshSections);
+    el('sectionRun').addEventListener('click', () => task('sectionResult', '正在导入分镜内容…', async () => {
+      if (!countSections()) throw new Error('请粘贴内容，并用空行分隔每段。');
+      const response = await send('import_sections', {text: el('sectionText').value, field: 'video_prompt', start_index: integer('sectionStart', 1)}, {timeoutMs: 660000});
+      const data = response.data || {};
+      const errors = data.errors || [];
+      status('sectionResult', (response.message || response.error || '导入完成') + (errors.length ? '\n' + errors.join('\n') : ''), response.ok === false ? (data.written ? 'warn' : 'err') : 'ok');
+    }));
+    el('assetChoose').addEventListener('click', () => task('assetResult', '正在打开文件夹选择器…', async () => {
+      const response = await send('choose_folder', {initial_dir: el('assetPath').value.trim()}, {timeoutMs: 600000});
+      const data = requireSuccess(response);
+      if (!data.folder_path) { status('assetResult', '已取消选择。'); return; }
+      el('assetPath').value = data.folder_path;
+      status('assetResult', '正在扫描目录并核对已有资产…'); await scanFolder();
+    }));
+    const scan = () => task('assetResult', '正在扫描目录并核对已有资产…', scanFolder);
+    el('assetScan').addEventListener('click', scan);
+    el('assetPath').addEventListener('keydown', event => { if (event.key === 'Enter') scan(); });
+    el('assetPath').addEventListener('input', () => {
+      state.scan = null; state.scannedPath = ''; renderStats(null);
+      el('assetSummary').textContent = '目录已变更，请重新扫描'; syncControls();
+    });
+    document.querySelectorAll('#assetTypes input').forEach(input => input.addEventListener('change', syncControls));
+    el('assetImport').addEventListener('click', () => task('assetResult', '正在导入资产，请保持当前作品打开…', async () => {
+      if (!state.scan || state.scannedPath !== el('assetPath').value.trim()) throw new Error('请先扫描当前目录。');
+      if (!selectedTypes().length) throw new Error('请至少勾选一种资产类型。');
+      const response = await send('import_assets', {folder_path: state.scannedPath, entity_types: selectedTypes()}, {timeoutMs: 900000});
+      const data = response.data;
+      if (!data) { requireSuccess(response); throw new Error('宿主未返回资产导入统计。'); }
+      const errors = (data.errors || []).map(item => (item.name ? item.name + '：' : '') + (item.error || '未知错误'));
+      status('assetResult', (data.message || response.error || response.message || '导入完成') + (errors.length ? '\n' + errors.join('\n') : ''), data.failed || response.ok === false ? (data.created ? 'warn' : 'err') : 'ok');
+      state.scan = null; state.scannedPath = '';
+      el('assetSummary').textContent = '本次成功 ' + Number(data.created || 0) + ' 个 · 失败 ' + Number(data.failed || 0) + ' 个。继续导入请重新扫描。';
+      renderStats(null);
+    }));
+    el('mapModeFull').addEventListener('click', () => { selectMapMode('full'); save('map_mode', state.mapMode); });
+    el('mapModeSpecified').addEventListener('click', () => { selectMapMode('specified'); save('map_mode', state.mapMode); });
+    el('mapKeywords').addEventListener('input', () => save('map_keywords', el('mapKeywords').value));
+    el('mapRun').addEventListener('click', () => task('mapResult', '正在读取资产和分镜并匹配图片…', async () => {
+      const start = integer('mapStart', 1), end = integer('mapEnd', 0);
+      if (end && end < start) throw new Error('结束分镜序号不能小于起始序号。');
+      const keywords = el('mapKeywords').value.trim();
+      if (state.mapMode === 'specified' && !keywords) throw new Error('指定匹配模式请填写匹配词，例如：人物、场景。');
+      const data = requireSuccess(await send('map_images', {start_index: start, end_index: end, require_prompt: el('mapRequire').checked, match_mode: state.mapMode, match_keywords: keywords, timeout_seconds: 1200}, {timeoutMs: 1260000}));
+      const lines = [data.message || '匹配完成', '', '全片分镜：' + (data.total_panels ?? '—'), '分镜范围：' + (data.panel_range || '—'), '待匹配：' + (data.target_count || 0) + ' · 成功：' + (data.success_count || 0) + ' · 失败：' + (data.failed_count || 0)];
+      if (data.logs && data.logs.length) lines.push('', ...data.logs);
+      status('mapResult', lines.join('\n'), data.status === 'error' ? 'err' : data.failed_count || data.status === 'warning' ? 'warn' : 'ok');
+    }));
+    if (sdk && typeof sdk.onProgress === 'function') sdk.onProgress(progress => {
+      if (state.busy && state.progressTarget && progress) status(state.progressTarget, (typeof progress.percent === 'number' ? progress.percent + '% · ' : '') + (progress.text || '正在处理…'));
+    });
+    if (sdk && typeof sdk.onReady === 'function') sdk.onReady(params => {
+      if (state.busy) return;
+      params = params || {};
+      selectFeature(params.selected_feature);
+      selectMapMode(params.map_mode);
+      if (params.map_keywords && !el('mapKeywords').value) el('mapKeywords').value = String(params.map_keywords);
+      if (params.last_folder_path && !el('assetPath').value) el('assetPath').value = String(params.last_folder_path);
+      syncControls();
+      refreshLicense();
+    });
+    renderStats(null); refreshSections(); selectMapMode('full'); syncControls();
+    refreshLicense();
+    window.setInterval(() => {
+      if (state.licensed && !state.permanent && state.expiresAt && Date.now() / 1000 >= state.expiresAt) {
+        state.licensed = false; el('licenseBadge').textContent = '未激活'; syncControls();
+        licenseMessage('授权已到期，请输入新激活码续期。', 'err');
+      }
+      refreshLicense();
+    }, 60000);
+    if (!sdk) Object.values(resultIds).forEach(id => status(id, '当前为界面预览。执行功能请在字字动画的作品插件面板中打开本插件。'));
+  })();
+  </script>
+</body>
+</html>
