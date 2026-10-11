@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 import sys
 import zipfile
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -13,6 +15,9 @@ import lingyun_update_core as core
 
 
 def sign(raw, key):
+    if isinstance(key, (str, Path)):
+        private_key = serialization.load_pem_private_key(Path(key).read_bytes(), password=None)
+        return base64.b64encode(private_key.sign(core.DOMAIN + raw, padding.PKCS1v15(), hashes.SHA256()))
     n, d = int(key['n'], 16), int(key['d'], 16)
     width = (n.bit_length() + 7) // 8
     hashed = hashlib.sha256(core.DOMAIN + raw).digest()
@@ -38,8 +43,8 @@ def build():
                     files={name: core.digest(data) for name, data in files.items()},
                     notes=(ROOT / 'CHANGELOG.md').read_text(encoding='utf-8'))
     raw = (json.dumps(manifest, ensure_ascii=False, indent=2) + '\n').encode('utf-8')
-    key_path = Path(os.environ['LOCALAPPDATA']) / 'LingyunPublisher/lingyun-toolkit/update-private.json'
-    signature = sign(raw, json.loads(key_path.read_text(encoding='utf-8-sig')))
+    key_path = Path(os.environ.get('LINGYUN_SIGNING_KEY', str(Path(os.environ['LOCALAPPDATA']) / 'LingyunPublisher/lingyun-toolkit/update-private.json')))
+    signature = sign(raw, key_path)
     core.verify_manifest(raw, signature, core.read_json(ROOT / 'lingyun_update_public.json'))
     (output / 'update.json').write_bytes(raw)
     (output / 'update.sig').write_bytes(signature)

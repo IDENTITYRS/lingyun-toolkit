@@ -1,10 +1,10 @@
-# 凌云·字字实用插件大全 V3.0.0
+# 凌云·字字实用插件大全 V4.0.0
 
 字字动画作品级工具插件：导入提示词、导入资产、按提示词匹配参考图片。顶部下拉切换功能，保留当前输入与结果。
 
 ## 安装与使用
 
-1. 从 [GitHub Releases](https://github.com/IDENTITYRS/lingyun-toolkit/releases/latest) 下载 `lingyun-toolkit-3.0.0-install.zip`。
+1. 从 [GitHub Releases](https://github.com/IDENTITYRS/lingyun-toolkit/releases/latest) 下载 `lingyun-toolkit-4.0.0-install.zip`。
 2. 退出字字动画，解压到软件的 `_internal/plugins/tool_plugins/project` 目录。保留一个本插件目录，避免重复显示。
 3. 重启软件，在作品插件中选择“凌云·字字实用插件大全”。复制底部机器码并使用对应激活码激活。
 4. 选择功能并执行。提示词导入和参考图匹配会修改作品中的目标分镜。
@@ -23,7 +23,7 @@
 
 点击更新后下载程序包，验证独立 RSA 签名、整体及各文件 SHA-256。独立“凌云插件更新助手”出现后，保存作品并完全退出字字动画，助手会自动安装。完成后重启软件。失败时恢复原程序；异常中断的安装在下次启动时恢复。网络失败时可检查网络或代理，再点击检查更新。
 
-更新沿用原目录，保留机器码、授权、到期时间和个人设置。客户端只请求 GitHub 公共发布文件，不上传授权记录或作品数据。更新签名密钥与激活密钥独立，发布包只包含公钥。
+更新沿用原目录，保留机器码、授权、到期时间和个人设置。客户端只请求 GitHub 公共发布文件，不上传授权记录或作品数据。V4.0.0 轮换了自动更新签名密钥；V3.0.0 及更早版本需手动安装 V4.0.0 完整包一次。更新签名密钥与激活密钥独立，发布包只包含公钥。
 
 ## 授权
 
@@ -41,6 +41,6 @@
 
 ## 发布
 
-更新版本、更新日志并通过测试后，运行 `python tools/build_release.py`。输出在 `dist/v版本号/`：自动更新 ZIP、手动安装 ZIP、`update.json` 和 `update.sig`。签名私钥仅存于发布电脑的 `%LOCALAPPDATA%\LingyunPublisher\lingyun-toolkit\update-private.json`，不放入仓库或安装包；请妥善离线备份，后续更新沿用该密钥。
+更新版本、更新日志并通过测试后，运行 `python tools/build_release.py`。输出在 `dist/v版本号/`：自动更新 ZIP、手动安装 ZIP、`update.json` 和 `update.sig`。签名私钥保存在发布电脑指定的外部 PEM 文件，不放入仓库或安装包；V4.0.0 之后的发布必须继续使用同一把私钥。
 
 将上述四个文件发布到 `IDENTITYRS/lingyun-toolkit` 的 `v版本号` Release，并标记为最新版。安装包不包含开发测试、测试授权夹具、私钥或个人数据。

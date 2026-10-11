@@ -40,7 +40,7 @@
         result = {ok: true, data: license};
       }
     }
-    else if (['check_update', 'update_status'].includes(message.action)) result = {ok: true, data: {ok:true, state:'latest', current_version:'3.0.0', latest_version:'3.0.0', running:false, message:'当前已是最新版。', releases:[{version:'3.0.0',notes:'首次正式发布。\n新增版本更新板块、历史记录翻页、独立更新助手。'}]}};
+    else if (['check_update', 'update_status'].includes(message.action)) result = {ok: true, data: {ok:true, state:'latest', current_version:'4.0.0', latest_version:'4.0.0', running:false, message:'当前已是最新版。', releases:[{version:'4.0.0',notes:'首次正式发布。\n新增版本更新板块、历史记录翻页、独立更新助手。'}]}};
     else if (message.action === 'import_sections') result = {ok: true, message: '测试：已写入 2 段，新增分镜 1 个。', data: {written: 2, added_panels: 1, errors: []}};
     else if (message.action === 'choose_folder') result = {ok: true, data: {folder_path: 'C:\\测试资产'}};
     else if (message.action === 'scan_assets') {

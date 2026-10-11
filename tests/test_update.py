@@ -45,15 +45,15 @@ class UpdateTests(unittest.TestCase):
 
     def package(self, change=None):
         files = {p.relative_to(self.root).as_posix():p.read_bytes() for p in self.root.rglob('*') if p.is_file() and core.code_name(p.relative_to(self.root).as_posix())}
-        meta = json.loads(files['plugin.json']); meta['version'] = '3.1.0'
+        meta = json.loads(files['plugin.json']); meta['version'] = '4.1.0'
         files['plugin.json'] = json.dumps(meta).encode()
         files['lingyun_features/mapper.py'] += b'\n# next version\n'
         if change: change(files)
         with zipfile.ZipFile(self.job / 'package.zip', 'w') as z:
             for name, data in files.items(): z.writestr('plugin/' + name, data)
         archive = (self.job / 'package.zip').read_bytes()
-        manifest = dict(schema=1,product=core.PRODUCT,version='3.1.0',archive_root='plugin',
-            url=f'https://github.com/{core.REPOSITORY}/releases/download/v3.1.0/lingyun-toolkit-3.1.0.zip',
+        manifest = dict(schema=1,product=core.PRODUCT,version='4.1.0',archive_root='plugin',
+            url=f'https://github.com/{core.REPOSITORY}/releases/download/v4.1.0/lingyun-toolkit-4.1.0.zip',
             size=len(archive),sha256=core.digest(archive),files={n:core.digest(d) for n,d in files.items()})
         raw = json.dumps(manifest).encode()
         (self.job/'update.json').write_bytes(raw)
@@ -66,7 +66,7 @@ class UpdateTests(unittest.TestCase):
         cache=self.root/'lingyun_features/__pycache__/mapper.cpython-312.pyc'
         cache.parent.mkdir(); cache.write_bytes(b'stale')
         self.package()
-        self.assertEqual(core.install(self.root,self.job_id),'3.1.0')
+        self.assertEqual(core.install(self.root,self.job_id),'4.1.0')
         self.assertEqual((self.root/'config.json').read_text(),'personal')
         self.assertEqual((self.root/'license.dat').read_text(),'activation')
         self.assertFalse(cache.exists())
@@ -98,7 +98,7 @@ class UpdateTests(unittest.TestCase):
 
     def test_reject_downgrade(self):
         self.package()
-        meta=core.read_json(self.root/'plugin.json');meta['version']='4.0.0';core.write_json(self.root/'plugin.json',meta)
+        meta=core.read_json(self.root/'plugin.json');meta['version']='4.1.0';core.write_json(self.root/'plugin.json',meta)
         with self.assertRaisesRegex(ValueError,'不高于'): core.install(self.root,self.job_id)
 
     def test_interrupted_transaction_recovers_on_next_start(self):
@@ -110,7 +110,7 @@ class UpdateTests(unittest.TestCase):
         self.assertTrue((core.state_dir(self.root)/'transaction.json').exists())
         self.assertTrue(core.recover(self.root))
         self.assertEqual((self.root/'lingyun_features/mapper.py').read_bytes(),original)
-        self.assertEqual(core.current_version(self.root),'3.0.0')
+        self.assertEqual(core.current_version(self.root),'4.0.0')
 
     def test_helper_waits_for_plugin_lease_then_installs(self):
         import subprocess
@@ -124,11 +124,11 @@ class UpdateTests(unittest.TestCase):
             while not (self.job/'helper-ready.json').exists() and time.monotonic()<deadline:time.sleep(.03)
             self.assertTrue((self.job/'helper-ready.json').exists())
             self.assertIsNone(process.poll())
-            self.assertEqual(core.current_version(self.root),'3.0.0')
+            self.assertEqual(core.current_version(self.root),'4.0.0')
             lease.close()
             out,err=process.communicate(timeout=15)
             self.assertEqual(process.returncode,0,err)
-            self.assertEqual(core.current_version(self.root),'3.1.0')
+            self.assertEqual(core.current_version(self.root),'4.1.0')
             self.assertEqual(core.read_json(core.state_dir(self.root)/'status.json')['state'],'done')
         finally:
             lease.close()
@@ -138,7 +138,7 @@ class UpdateTests(unittest.TestCase):
         notes=updater.release_notes('## V1.10.0\nnew\n## V1.9.0\nold')
         self.assertEqual(list(sorted(notes,key=core.version,reverse=True)),['1.10.0','1.9.0'])
         manager=updater.Manager(self.root)
-        self.assertEqual(manager.history()['3.0.0'].splitlines()[0],'- 首次正式发布，统一版本号为 V3.0.0。')
+        self.assertEqual(manager.history()['4.0.0'].splitlines()[0],'- 由于原更新签名私钥丢失，轮换实用插件大全自动更新签名密钥并更新内置公钥。')
         with patch.object(manager,'_begin',return_value={'state':'checking'}) as begin:
             manager.session['checked']=True
             manager.begin(automatic=True)
