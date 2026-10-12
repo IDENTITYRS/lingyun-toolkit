@@ -110,7 +110,7 @@ class UpdateTests(unittest.TestCase):
         self.assertTrue((core.state_dir(self.root)/'transaction.json').exists())
         self.assertTrue(core.recover(self.root))
         self.assertEqual((self.root/'lingyun_features/mapper.py').read_bytes(),original)
-        self.assertEqual(core.current_version(self.root),'4.0.0')
+        self.assertEqual(core.current_version(self.root),'4.0.1')
 
     def test_helper_waits_for_plugin_lease_then_installs(self):
         import subprocess
@@ -124,7 +124,7 @@ class UpdateTests(unittest.TestCase):
             while not (self.job/'helper-ready.json').exists() and time.monotonic()<deadline:time.sleep(.03)
             self.assertTrue((self.job/'helper-ready.json').exists())
             self.assertIsNone(process.poll())
-            self.assertEqual(core.current_version(self.root),'4.0.0')
+            self.assertEqual(core.current_version(self.root),'4.0.1')
             lease.close()
             out,err=process.communicate(timeout=15)
             self.assertEqual(process.returncode,0,err)

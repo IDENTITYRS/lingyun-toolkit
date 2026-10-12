@@ -26,6 +26,14 @@ class LicenseError(ValueError):
     pass
 
 
+class LicenseStateError(LicenseError):
+    """授权文件无法安全读取；保留错误类别供界面给出可操作提示。"""
+
+    def __init__(self, code, message):
+        self.code = code
+        super().__init__(message)
+
+
 def machine_code():
     try:
         with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography", 0,
@@ -138,7 +146,7 @@ def _crypt(data, decrypt=False):
                          ctypes.c_void_p, ctypes.c_void_p, wintypes.DWORD, ctypes.POINTER(Blob)]
     function.restype = wintypes.BOOL
     if not function(ctypes.byref(source), None, None, None, None, 1, ctypes.byref(result)):
-        raise LicenseError("授权记录无法读取或保存，请使用激活时的 Windows 账户。")
+        raise LicenseStateError("dpapi_unreadable", "授权记录无法由当前 Windows 账户解密，请使用激活时的账户，或联系授权方处理。")
     kernel32 = ctypes.WinDLL("kernel32.dll")
     kernel32.LocalFree.argtypes = [ctypes.c_void_p]
     kernel32.LocalFree.restype = ctypes.c_void_p
@@ -186,16 +194,24 @@ def _load(path, machine):
         return {"v": 1, "machine": machine, "expires_at": 0, "permanent": False, "used": [], "last_seen": 0}
     try:
         state = json.loads(_crypt(path.read_bytes(), decrypt=True))
-        if state["v"] != 1 or state["machine"] != machine or type(state["permanent"]) is not bool:
-            raise ValueError("bad state")
+        if not isinstance(state, dict):
+            raise ValueError("state is not an object")
+        if state.get("v") != 1:
+            raise ValueError("bad version")
+        if state.get("machine") != machine:
+            raise LicenseStateError("machine_mismatch", "本地授权记录属于另一台设备，请使用原设备的机器码，或联系授权方处理。")
+        if type(state.get("permanent")) is not bool:
+            raise ValueError("bad permanent flag")
         for key in ("expires_at", "last_seen"):
-            if type(state[key]) not in (int, float) or not math.isfinite(state[key]) or state[key] < 0:
+            if type(state.get(key)) not in (int, float) or not math.isfinite(state[key]) or state[key] < 0:
                 raise ValueError("bad time")
-        if not isinstance(state["used"], list) or any(not isinstance(item, str) for item in state["used"]):
+        if not isinstance(state.get("used"), list) or any(not isinstance(item, str) for item in state["used"]):
             raise ValueError("bad receipts")
         return state
+    except LicenseStateError:
+        raise
     except Exception as exc:
-        raise LicenseError("本地授权记录损坏或属于其他账户，请联系授权方处理。") from exc
+        raise LicenseStateError("state_invalid", "本地授权记录损坏，原授权文件已保留；请联系授权方处理。") from exc
 
 
 def _save(path, state):
@@ -228,7 +244,13 @@ def get_status():
     path = _state_path()
     with _locked(path):
         now = time.time()
-        state = _load(path, machine)
+        try:
+            state = _load(path, machine)
+        except LicenseStateError as exc:
+            # 机器码独立于授权文件，授权文件损坏时仍返回它，避免界面卡在“正在获取机器码”。
+            return {"machine_code": machine, "active": False, "permanent": False,
+                    "expires_at": 0, "expires_text": "", "label": "未激活", "expired": False,
+                    "error": str(exc), "state_error": exc.code}
         if not state["permanent"] and now + 300 < state["last_seen"]:
             return {**_describe(state, now), "active": False, "label": "未激活", "error": "系统时间早于最近验证时间，请校准系统时间。"}
         if state["used"] and now > state["last_seen"] + 60:

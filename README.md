@@ -1,10 +1,10 @@
-# 凌云·字字实用插件大全 V4.0.0
+# 凌云·字字实用插件大全 V4.0.1
 
 字字动画作品级工具插件：导入提示词、导入资产、按提示词匹配参考图片。顶部下拉切换功能，保留当前输入与结果。
 
 ## 安装与使用
 
-1. 从 [GitHub Releases](https://github.com/IDENTITYRS/lingyun-toolkit/releases/latest) 下载 `lingyun-toolkit-4.0.0-install.zip`。
+1. 从 [GitHub Releases](https://github.com/IDENTITYRS/lingyun-toolkit/releases/latest) 下载 `lingyun-toolkit-4.0.1-install.zip`。
 2. 退出字字动画，解压到软件的 `_internal/plugins/tool_plugins/project` 目录。保留一个本插件目录，避免重复显示。
 3. 重启软件，在作品插件中选择“凌云·字字实用插件大全”。复制底部机器码并使用对应激活码激活。
 4. 选择功能并执行。提示词导入和参考图匹配会修改作品中的目标分镜。

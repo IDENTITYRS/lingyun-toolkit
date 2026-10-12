@@ -90,8 +90,26 @@ class LicenseTests(unittest.TestCase):
         lm.activate(self.codes["month"])
         self.assertNotIn(b"expires_at", self.path.read_bytes())
         self.path.write_bytes(b'{"permanent":true}')
-        with self.assertRaises(lm.LicenseError):
-            lm.get_status()
+        status = lm.get_status()
+        self.assertEqual(status["machine_code"], FIXTURE["machine"])
+        self.assertFalse(status["active"])
+        self.assertEqual(status["state_error"], "dpapi_unreadable")
+
+    def test_invalid_state_returns_machine_code_without_overwriting_file(self):
+        self.path.write_bytes(b"not-a-dpapi-record")
+        status = lm.get_status()
+        self.assertEqual(status["machine_code"], FIXTURE["machine"])
+        self.assertFalse(status["active"])
+        self.assertEqual(status["state_error"], "dpapi_unreadable")
+        self.assertEqual(self.path.read_bytes(), b"not-a-dpapi-record")
+
+    def test_machine_mismatch_returns_machine_code(self):
+        lm.activate(self.codes["month"])
+        with patch.object(lm, "machine_code", return_value="LY-OTHER"):
+            status = lm.get_status()
+        self.assertEqual(status["machine_code"], "LY-OTHER")
+        self.assertFalse(status["active"])
+        self.assertEqual(status["state_error"], "machine_mismatch")
 
     def test_clock_rollback_rejected(self):
         lm.activate(self.codes["month"])

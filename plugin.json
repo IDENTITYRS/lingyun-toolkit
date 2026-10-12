@@ -2,7 +2,7 @@
   "name": "lingyun_practical_toolkit",
   "display_name": "凌云·字字实用插件大全",
   "description": "三个作品工具合为一个插件：按空行批量导入分镜提示词、按文件名批量导入角色/场景/道具图片、按全文或指定文字行匹配参考图片。通过 feature 选择功能，资产导入通过 action 区分扫描和写入。",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "scope": "project",
   "expose_as_tool": true,
   "input_schema": {
