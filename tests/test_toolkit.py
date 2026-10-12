@@ -210,7 +210,8 @@ class ToolkitTests(unittest.TestCase):
         declared = {name for cap in meta["declared_capabilities"] for name in cap["requires_tools"]}
         expected = {name for name, _ in toolkit.sections.FIELD_TOOL.values()} | {
             "zzdh_get_panels", "zzdh_add_panel", "zzdh_get_entity_list",
-            "zzdh_batch_create_entity", "zzdh_set_panel_entity_selections"}
+            "zzdh_batch_create_entity", "zzdh_set_panel_entity_selections",
+            "zzdh_get_edit_view_data", "zzdh_save_reference_items"}
         self.assertEqual(declared, expected)
 
 

@@ -23,7 +23,7 @@
     function render(data) {
       snapshot = data;
       const available = data.state === 'available';
-      el('updateVersion').textContent = '当前版本：V' + (data.current_version || '4.0.0');
+      el('updateVersion').textContent = '当前版本：V' + (data.current_version || '4.2.0');
       el('updateHint').textContent = available ? '发现新版本 V' + data.latest_version : '';
       el('updateMessage').textContent = data.message || '点击检查更新。';
       el('updateMessage').className = 'update-message ' + (data.ok === false ? 'err' : '');
@@ -34,8 +34,8 @@
         const x = a.split('.').map(Number), y = b.split('.').map(Number);
         return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
       };
-      history = releases.filter(item => compare(item.version, data.current_version || '4.0.0') <= 0);
-      const upcoming = releases.filter(item => compare(item.version, data.current_version || '4.0.0') > 0);
+      history = releases.filter(item => compare(item.version, data.current_version || '4.2.0') <= 0);
+      const upcoming = releases.filter(item => compare(item.version, data.current_version || '4.2.0') > 0);
       el('updateNewNotes').hidden = !upcoming.length;
       el('updateNewNotes').textContent = upcoming.map(item => `V${item.version} 更新内容\n${item.notes}`).join('\n\n');
       const progress = el('updateProgress');

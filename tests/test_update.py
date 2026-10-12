@@ -37,6 +37,10 @@ class UpdateTests(unittest.TestCase):
                 target = self.root / name
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(p, target)
+        # 固定从上一版本升级到 4.2.0，避免发布版本变化后变成同版本安装。
+        meta = core.read_json(self.root / 'plugin.json')
+        meta['version'] = '4.1.0'
+        core.write_json(self.root / 'plugin.json', meta)
         core.write_json(self.root / 'lingyun_update_public.json', {k:self.key[k] for k in ('n','e')})
         state = patch.dict('os.environ', {'LOCALAPPDATA': str(Path(self.tmp.name) / 'state')})
         state.start(); self.addCleanup(state.stop)

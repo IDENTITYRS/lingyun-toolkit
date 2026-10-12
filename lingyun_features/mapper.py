@@ -12,7 +12,8 @@
 本插件自己算匹配：读取项目角色/场景/道具实体，对每个分镜提示词做
 **最长名字优先 + 命中即抹除**的匹配（先匹配"阿建的父亲"并把这几个字从文本挖掉，
 "阿建"在剩余文本里就不会再命中），再用 `zzdh_set_panel_entity_selections`
-直接写回选中结果。
+直接写回选中结果。宿主会把实体的历史候选图也展开到参考项，因此写回后
+移除已匹配实体的非主图，只保留资产管理中当前选中的主图。
 
 - 不重新生成提示词、不改文案、不生成图片、不删除内容。
 - 核心逻辑在 async def execute(context)，UI 通过 handle_action -> ToolClient -> execute 复用同一套逻辑。
@@ -20,6 +21,7 @@
 
 import asyncio
 import concurrent.futures
+import ntpath
 import re
 
 
@@ -214,6 +216,76 @@ def _match_kind(text, entities, kind):
     return [(eid, names[eid]) for eid in selected]
 
 
+def _image_path_key(path):
+    """宿主返回 Windows 绝对路径，统一斜杠和大小写后比较。"""
+    path = _text(path)
+    return ntpath.normcase(ntpath.normpath(path)) if path else ""
+
+
+def _entity_image_paths(entity):
+    """返回当前主图及所有图片路径；候选顺序沿用宿主，不按文件时间猜测。"""
+    paths = []
+    primary = _text(entity.get("image_path"))
+    if primary:
+        paths.append(primary)
+    for item in entity.get("reference_items") or []:
+        if isinstance(item, dict) and item.get("media_type") == "image":
+            path = _text(item.get("path"))
+            if path:
+                paths.append(path)
+    for item in entity.get("image_candidates") or []:
+        if isinstance(item, dict) and _text(item.get("path")):
+            paths.append(_text(item["path"]))
+    paths.extend(_text(path) for path in entity.get("extra_images") or [] if _text(path))
+    return primary or (paths[0] if paths else ""), paths
+
+
+def _historical_image_keys(matched, entities):
+    primary_keys = set()
+    candidate_keys = set()
+    for kind in ENTITY_KINDS:
+        selected = {eid for eid, _name in matched[kind]}
+        for entity in entities[kind]:
+            entity_id = _text(entity.get(_ID_KEYS[kind]) or entity.get("id"))
+            if entity_id not in selected:
+                continue
+            primary, paths = _entity_image_paths(entity)
+            if primary:
+                primary_keys.add(_image_path_key(primary))
+                candidate_keys.update(_image_path_key(path) for path in paths)
+    # 某张历史图也可能是另一个已匹配资产的主图，此时仍须保留。
+    return candidate_keys - primary_keys
+
+
+async def _remove_historical_images(tools, unique_name, historical_keys):
+    if not historical_keys:
+        return 0
+    result = await tools.call_tool(
+        "zzdh_get_edit_view_data", {"unique_name": unique_name}, timeout=45,
+    )
+    # 完整编辑数据中的 reference_images 是宿主解析后的绝对路径列表。
+    data = result.get("data", result) if isinstance(result, dict) else None
+    references = data.get("reference_images") if isinstance(data, dict) else None
+    if not isinstance(references, list):
+        raise RuntimeError("无法读取分镜参考项，未能移除历史候选图，请重新匹配。")
+    kept = []
+    removed = 0
+    for item in references:
+        if not isinstance(item, dict) or not _text(item.get("path")):
+            raise RuntimeError("分镜参考项格式异常，未能移除历史候选图，请重新匹配。")
+        if item.get("media_type", "image") == "image" and _image_path_key(item["path"]) in historical_keys:
+            removed += 1
+        else:
+            kept.append(dict(item))
+    if removed:
+        saved = await tools.call_tool(
+            "zzdh_save_reference_items", {"unique_name": unique_name, "items": kept}, timeout=45,
+        )
+        if isinstance(saved, dict) and "saved" in saved and saved["saved"] != len(kept):
+            raise RuntimeError("宿主未完整保存参考项，请检查素材路径后重新匹配。")
+    return removed
+
+
 # ---------------------------------------------------------------------------
 # 工具调用门面
 # ---------------------------------------------------------------------------
@@ -254,7 +326,7 @@ def _context_panels(context):
 async def _load_entities(tools):
     entities = {}
     for kind in ENTITY_KINDS:
-        result = await tools.call_tool("zzdh_get_entity_list", {"entity_type": kind}, timeout=45, allow_error=True)
+        result = await tools.call_tool("zzdh_get_entity_list", {"entity_type": kind}, timeout=45)
         raw = result.get("entities") if isinstance(result, dict) else []
         entities[kind] = [e for e in (raw or []) if isinstance(e, dict)]
     return entities
@@ -345,6 +417,9 @@ async def execute(context):
                 {"unique_name": unique_name, **selection},
                 timeout=45,
             )
+            removed = await _remove_historical_images(
+                tools, unique_name, _historical_image_keys(matched, entities),
+            )
             picked = {
                 _KIND_LABELS[kind]: [name for _eid, name in matched[kind]]
                 for kind in ENTITY_KINDS
@@ -355,6 +430,7 @@ async def execute(context):
                 "character_count": len(matched["character"]),
                 "location_count": len(matched["location"]),
                 "item_count": len(matched["item"]),
+                "removed_history_count": removed,
                 "picked": picked,
             })
             log(
@@ -362,6 +438,7 @@ async def execute(context):
                 f"角色[{ '、'.join(picked['角色']) or '无' }] "
                 f"场景[{ '、'.join(picked['场景']) or '无' }] "
                 f"道具[{ '、'.join(picked['道具']) or '无' }]"
+                + (f"；已排除 {removed} 张历史候选图" if removed else "")
             )
         except Exception as exc:
             error = _text(getattr(exc, "message", "")) or str(exc)
@@ -457,6 +534,10 @@ def _run_coro_sync(coro, timeout=600):
 class _SelfTestTools:
     def __init__(self):
         self.calls = []
+        self.references = [
+            {"path": "C:/self-test/father-current.png", "media_type": "image"},
+            {"path": "C:/self-test/father-old.png", "media_type": "image"},
+        ]
 
     async def call_tool(self, name, arguments=None):
         arguments = arguments or {}
@@ -466,7 +547,9 @@ class _SelfTestTools:
             if kind == "character":
                 return {"entities": [
                     {"character_id": "c_aj", "name": "阿建"},
-                    {"character_id": "c_fq", "name": "阿建的父亲"},
+                    {"character_id": "c_fq", "name": "阿建的父亲",
+                     "image_path": "C:/self-test/father-current.png",
+                     "extra_images": ["C:/self-test/father-old.png"]},
                     {"character_id": "c_ls", "name": "李婶"},
                     {"character_id": "c_hy", "name": "海音", "alias": "音丫头"},
                     {"character_id": "c_xl", "name": "小丽"},
@@ -486,6 +569,11 @@ class _SelfTestTools:
             }]}
         if name == "zzdh_set_panel_entity_selections":
             return {"success": True}
+        if name == "zzdh_get_edit_view_data":
+            return {"reference_images": self.references}
+        if name == "zzdh_save_reference_items":
+            self.references = list(arguments["items"])
+            return {"success": True, "saved": len(self.references)}
         return {"success": False, "error": f"unexpected tool: {name}"}
 
 
@@ -511,8 +599,9 @@ async def self_test(context):
          "message": "‘海音/音丫头’未误命中"},
         {"id": "matches_location", "ok": "l_yz" in loc_ids,
          "message": "场景‘福海村村委会大院’命中"},
-        {"id": "writes_selection", "ok": bool(set_call),
-         "message": "通过 zzdh_set_panel_entity_selections 写回选中"},
+        {"id": "writes_selection", "ok": bool(set_call) and tools.references == [
+            {"path": "C:/self-test/father-current.png", "media_type": "image"}],
+         "message": "写回选中并排除历史候选图，仅保留当前主图"},
         {"id": "status_ok", "ok": result.get("status") == "ok",
          "message": "流程返回 ok"},
     ]

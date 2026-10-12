@@ -177,12 +177,13 @@
           <div class="actions"><button id="mapRun" class="primary" type="button">开始匹配图片</button></div>
           <p class="hint">全文匹配扫描整段提示词；指定匹配只扫描包含匹配词的行。均按长名称优先，并忽略中英文双引号内的对白。</p>
           <p class="hint">请先导入对应资产；没有命中的类别会清空本次选中。</p>
+          <p class="hint">每个命中资产只使用资产管理中当前选中的主图，自动排除重新生成前的历史候选图。</p>
           <pre id="mapResult" class="result" role="status" aria-live="polite">设置分镜范围后开始匹配。</pre>
         </div>
       </div>
     </section>
     <details id="updatePanel" class="panel update-panel">
-      <summary><span>版本更新</span><span id="updateHint"></span><span id="updateVersion">当前版本：V4.0.0</span></summary>
+      <summary><span>版本更新</span><span id="updateHint"></span><span id="updateVersion">当前版本：V4.2.0</span></summary>
       <div class="update-content">
         <div class="actions"><button id="checkUpdate" type="button">检查更新</button><button id="installUpdate" class="primary" type="button" hidden>更新</button></div>
         <div id="updateMessage" class="update-message" role="status" aria-live="polite">正在准备检查更新…</div>
@@ -191,8 +192,8 @@
         <pre id="updateNewNotes" class="update-notes" hidden></pre>
         <details class="update-history"><summary>历史更新记录</summary>
           <div class="update-pager"><button id="updateHistoryPrev" type="button" aria-label="上一条更新记录" disabled>←</button><span id="updateHistoryPosition">1 / 1</span><button id="updateHistoryNext" type="button" aria-label="下一条更新记录" disabled>→</button></div>
-          <h3 id="updateHistoryTitle">V4.0.0 更新内容</h3>
-          <pre id="updateHistoryNotes" class="update-notes">首次正式发布；集成三项作品工具、版本更新和授权管理。</pre>
+          <h3 id="updateHistoryTitle">V4.2.0 更新内容</h3>
+          <pre id="updateHistoryNotes" class="update-notes">修复重新生成图片后新旧候选图被同时匹配的问题；每个命中资产仅保留当前选中的主图。</pre>
         </details>
       </div>
     </details>

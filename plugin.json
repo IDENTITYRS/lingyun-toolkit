@@ -2,7 +2,7 @@
   "name": "lingyun_practical_toolkit",
   "display_name": "凌云·字字实用插件大全",
   "description": "三个作品工具合为一个插件：按空行批量导入分镜提示词、按文件名批量导入角色/场景/道具图片、按全文或指定文字行匹配参考图片。通过 feature 选择功能，资产导入通过 action 区分扫描和写入。",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "scope": "project",
   "expose_as_tool": true,
   "input_schema": {
@@ -127,16 +127,19 @@
     },
     {
       "id": "match_prompt_reference_images",
-      "description": "按全文或包含指定词的文字行匹配名称及别名，最长优先、忽略双引号对白，更新分镜参考图选中项。实现位于 lingyun_features/mapper.py。",
+      "description": "按全文或包含指定词的文字行匹配名称及别名，最长优先、忽略双引号对白，更新分镜参考图选中项，并排除历史候选图、保留当前主图。实现位于 lingyun_features/mapper.py。",
       "requires_tools": [
         "zzdh_get_panels",
         "zzdh_get_entity_list",
-        "zzdh_set_panel_entity_selections"
+        "zzdh_set_panel_entity_selections",
+        "zzdh_get_edit_view_data",
+        "zzdh_save_reference_items"
       ],
       "effects": [
         "reads_project_panels",
         "reads_entity_assets",
-        "updates_panel_entity_selections"
+        "updates_panel_entity_selections",
+        "updates_panel_reference_items"
       ]
     }
   ],
