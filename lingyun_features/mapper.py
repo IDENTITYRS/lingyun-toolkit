@@ -83,9 +83,14 @@ def _panel_index(panel, fallback):
 
 
 def _panel_text(panel):
-    """用于匹配的文本：以用户粘贴的提示词为主，含视频提示词。"""
+    """用于匹配的文本：只取当前分镜自身的提示词字段。
+
+    不读取 processed_prompt —— 宿主生成图片时会把前后分镜的角色/场景
+    信息注入 processed_prompt，导致匹配到不属于本页的实体。仅使用用户
+    原始填写的 prompt 和 video_prompt，确保匹配范围限定在当前页面。
+    """
     parts = []
-    for key in ("prompt", "processed_prompt", "video_prompt"):
+    for key in ("prompt", "video_prompt"):
         value = _text(panel.get(key))
         if value:
             parts.append(value)
@@ -112,7 +117,7 @@ def _matching_text(text, args):
 
 
 def _has_prompt(panel):
-    return bool(_text(panel.get("prompt") or panel.get("processed_prompt")) or _text(panel.get("video_prompt")))
+    return bool(_text(panel.get("prompt")) or _text(panel.get("video_prompt")))
 
 
 # ---------------------------------------------------------------------------

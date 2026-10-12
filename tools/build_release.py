@@ -6,8 +6,6 @@ import os
 from pathlib import Path
 import sys
 import zipfile
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -16,6 +14,8 @@ import lingyun_update_core as core
 
 def sign(raw, key):
     if isinstance(key, (str, Path)):
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import padding
         private_key = serialization.load_pem_private_key(Path(key).read_bytes(), password=None)
         return base64.b64encode(private_key.sign(core.DOMAIN + raw, padding.PKCS1v15(), hashes.SHA256()))
     n, d = int(key['n'], 16), int(key['d'], 16)
